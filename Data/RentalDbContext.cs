@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentalService.Models;
+using static RentalService.Models.User;
 
 namespace RentalService.Data
 {
@@ -22,7 +24,7 @@ namespace RentalService.Data
 
             modelBuilder.Entity<User>()
                 .Property(u => u.IsSeller)
-                .IsRequired();
+            .IsRequired();
 
             // Property entity
             modelBuilder.Entity<Property>()
@@ -31,7 +33,8 @@ namespace RentalService.Data
             modelBuilder.Entity<Property>()
                 .HasOne(p => p.User)
                 .WithMany(u => u.Properties)
-                .HasForeignKey(p => p.UserId);
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict); // No cascade delete to avoid cycles
 
             // Interest entity
             modelBuilder.Entity<Interest>()
@@ -40,12 +43,14 @@ namespace RentalService.Data
             modelBuilder.Entity<Interest>()
                 .HasOne(i => i.Property)
                 .WithMany(p => p.Interests)
-                .HasForeignKey(i => i.PropertyId);
+                .HasForeignKey(i => i.PropertyId)
+                .OnDelete(DeleteBehavior.Restrict); // No cascade delete to avoid cycles
 
             modelBuilder.Entity<Interest>()
                 .HasOne(i => i.Buyer)
                 .WithMany(u => u.Interests)
-                .HasForeignKey(i => i.BuyerId);
+                .HasForeignKey(i => i.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict); // No cascade delete to avoid cycles
         }
 
         public DbSet<User> Users { get; set; }

@@ -7,6 +7,7 @@ namespace RentalService.Models
         public int UserId { get; set; }
         public string Username { get; set; } = string.Empty;
         public byte[] PasswordHash { get; set; } = new byte[0];
+        public byte[] PasswordSalt { get; set; } = new byte[0];
 
         [Required]
         [StringLength(100)]
@@ -32,5 +33,6 @@ namespace RentalService.Models
         public DateTime Created { get; set; }
         public string RefreshToken { get; set; } = string.Empty;
         public DateTime TokenExpires { get; set; }
+        public DateTime TokenCreated { get; set; }
     }
 }

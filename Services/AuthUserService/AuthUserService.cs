@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using RentalService.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -6,14 +7,14 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace RentalService.Services
+namespace RentalService.Services.AuthUserService
 {
     public class AuthUserService : IAuthUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
 
-        public AuthUserService(IConfiguration configuration,IHttpContextAccessor httpContextAccessor)
+        public AuthUserService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
@@ -36,12 +37,12 @@ namespace RentalService.Services
             }
         }
 
-        public string CreateToken(UserViewModel user)
+        public string CreateToken(User user)
         {
             List<Claim> claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, "Admin")
+                new Claim(ClaimTypes.Role, user.UserRole)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("Secrets:Key").Value));

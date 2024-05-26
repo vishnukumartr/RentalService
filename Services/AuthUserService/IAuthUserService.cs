@@ -1,6 +1,6 @@
 ﻿using RentalService.Models;
 
-namespace RentalService.Services
+namespace RentalService.Services.AuthUserService
 {
     public interface IAuthUserService
     {
@@ -8,8 +8,9 @@ namespace RentalService.Services
 
         bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt);
 
-        string CreateToken(UserViewModel user);
+        string CreateToken(User user);
 
         RefreshToken GenerateRefreshToken();
+
     }
 }

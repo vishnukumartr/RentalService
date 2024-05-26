@@ -1,16 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using RentalService.Models;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace RentalService.Models
+namespace RentalService.Dtos
 {
-    public class Property
+    public class CreatePropertyDto
     {
         public int PropertyId { get; set; }
 
         public int UserId { get; set; }
-
-        [JsonIgnore]
-        public User User { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -34,8 +32,5 @@ namespace RentalService.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
-
-        [JsonIgnore]
-        public ICollection<Interest> Interests { get; set; }
     }
 }
