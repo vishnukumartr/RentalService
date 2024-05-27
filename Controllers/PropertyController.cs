@@ -6,6 +6,7 @@ using RentalService.Data;
 using RentalService.Dtos;
 using RentalService.Models;
 using RentalService.Services.PropertyService;
+using System.Text.Json.Serialization;
 
 namespace RentalService.Controllers
 {
@@ -30,7 +31,7 @@ namespace RentalService.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest("an error occured while adding the property" + ex.Message);
             }
         }
 

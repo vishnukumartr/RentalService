@@ -8,6 +8,7 @@ using RentalService.Data;
 using RentalService.Services.AuthUserService;
 using RentalService.Services.PropertyService;
 using RentalService.Services.InterestService;
+using RentalService;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
@@ -26,6 +27,12 @@ builder.Services.AddScoped<IAuthUserService, AuthUserService>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IShowInterestService, ShowInterestService>();
 builder.Services.AddHttpContextAccessor();
+
+
+//Adding Global Logging Functionality
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+builder.Services.AddLogging();
 
 // Functionality - Using Bearer Token in Swagger UI (SecurityRequirementsOperationFilter)
 builder.Services.AddSwaggerGen(options =>

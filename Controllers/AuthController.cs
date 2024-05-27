@@ -30,69 +30,95 @@ namespace RentalService.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<string>> Register([FromBody] UserRegisterDto request)
         {
-            if(string.IsNullOrEmpty(request.UserRole) || (request.UserRole != "Seller" && request.UserRole != "Buyer"))
+            try
             {
-                return BadRequest("User Role is Empty | User Role allows values only - Seller or Buyer");
+                if (string.IsNullOrEmpty(request.UserRole) || (request.UserRole != "Seller" && request.UserRole != "Buyer"))
+                {
+                    return BadRequest("User Role is Empty | User Role allows values only - Seller or Buyer");
+                }
+
+                var user = await _userService.RegisterUser(request);
+
+                return Ok("User Registered Successfully");
             }
-
-            var user = await _userService.RegisterUser(request);
-
-            return Ok("User Registered Successfully");
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = ex.Message
+                });
+            }
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login([FromBody] UserLoginDto request)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserEmail.ToLower().Equals(request.UserEmail.ToLower()));
-
-            if (user == null)
+            try
             {
-                return BadRequest("User not found.");
-            }
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserEmail.ToLower().Equals(request.UserEmail.ToLower()));
 
-            if (!_userService.VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                if (!_userService.VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
+                {
+                    return BadRequest("Wrong password.");
+                }
+
+                string token = _userService.CreateToken(user);
+
+                var refreshToken = _userService.GenerateRefreshToken();
+
+                SetRefreshToken(refreshToken, ref user);
+
+                await _context.SaveChangesAsync();
+
+                return Ok("User Loggedin Successfully, Token :" + token);
+            }
+            catch (Exception ex)
             {
-                return BadRequest("Wrong password.");
+                return StatusCode(500, new { error = ex.Message });
             }
-
-            string token = _userService.CreateToken(user);
-
-            var refreshToken = _userService.GenerateRefreshToken();
-
-            SetRefreshToken(refreshToken, ref user);
-
-            await _context.SaveChangesAsync();
-
-            return Ok("User Loggedin Successfully, Token :" + token);
         }
 
         [Authorize]
         [HttpPost("refresh-token")]
         public async Task<ActionResult<string>> RefreshToken(User user)
         {
-            var refreshToken = Request.Cookies["refreshToken"];
-
-            if (!user.RefreshToken.Equals(refreshToken))
+            try
             {
-                return Unauthorized("Invalid Refresh Token.");
+                var refreshToken = Request.Cookies["refreshToken"];
+
+                if (!user.RefreshToken.Equals(refreshToken))
+                {
+                    return Unauthorized("Invalid Refresh Token.");
+                }
+                else if (user.TokenExpires < DateTime.Now)
+                {
+                    return Unauthorized("Token expired.");
+                }
+
+                string token = _userService.CreateToken(user);
+                var newRefreshToken = _userService.GenerateRefreshToken();
+
+                SetRefreshToken(newRefreshToken, ref user);
+
+                _context.Users.Add(user);
+
+                await _context.SaveChangesAsync();
+
+                return Ok("JWT Token Refreshed");
             }
-            else if (user.TokenExpires < DateTime.Now)
+            catch (Exception ex)
             {
-                return Unauthorized("Token expired.");
+                return StatusCode(500, new { message= "an error occured while refresh jwt token",
+                    error = ex.Message });
             }
 
-            string token = _userService.CreateToken(user);
-            var newRefreshToken = _userService.GenerateRefreshToken();
-
-            SetRefreshToken(newRefreshToken, ref user);
-
-            _context.Users.Add(user);
-
-            await _context.SaveChangesAsync();
-
-            return Ok("JWT Token Refreshed");
         }
 
         private void SetRefreshToken(RefreshToken refreshToken, ref User user) 

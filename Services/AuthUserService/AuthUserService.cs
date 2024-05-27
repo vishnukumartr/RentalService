@@ -18,13 +18,15 @@ namespace RentalService.Services.AuthUserService
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
         private readonly RentalDbContext _context;
+        private readonly ILogger<AuthUserService> _logger;
 
         public AuthUserService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, 
-                                RentalDbContext dbContext)
+                                RentalDbContext dbContext, ILogger<AuthUserService> logger)
         {
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
             _context = dbContext;
+            _logger = logger;
         }
 
         public void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
@@ -83,36 +85,46 @@ namespace RentalService.Services.AuthUserService
 
         public async Task<User> RegisterUser(UserRegisterDto registerDto)
         {
-            if (_context.Users.Any(u => u.UserEmail == registerDto.UserEmail))
+            try
             {
-                throw new InvalidOperationException("Email already exists.");
+                if (_context.Users.Any(u => u.UserEmail == registerDto.UserEmail))
+                {
+                    throw new InvalidOperationException("Email already exists.");
+                }
+
+                CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+
+                var user = new User
+                {
+                    UserEmail = registerDto.UserEmail,
+                    Username = registerDto.UserEmail.Substring(0, registerDto.UserEmail.IndexOf("@")),
+                    PasswordHash = passwordHash,
+                    PasswordSalt = passwordSalt,
+                    FirstName = registerDto.FirstName,
+                    LastName = registerDto.LastName,
+                    FullName = string.Concat(registerDto.FirstName, " ", registerDto.LastName),
+                    PhoneNumber = registerDto.PhoneNumber,
+                    UserRole = registerDto.UserRole,
+                };
+
+                if (registerDto.UserRole != null && registerDto.UserRole == "Seller")
+                {
+                    user.IsSeller = true;
+                }
+
+                _context.Users.Add(user);
+
+                await _context.SaveChangesAsync();
+
+                return user;
             }
 
-            CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
-
-            var user = new User
+            catch (Exception ex) 
             {
-                UserEmail = registerDto.UserEmail,
-                Username = registerDto.UserEmail.Substring(0, registerDto.UserEmail.IndexOf("@")),
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt,
-                FirstName = registerDto.FirstName,
-                LastName = registerDto.LastName,
-                FullName = string.Concat(registerDto.FirstName, " ", registerDto.LastName),
-                PhoneNumber = registerDto.PhoneNumber,
-                UserRole = registerDto.UserRole,
-            };
-
-            if (registerDto.UserRole != null && registerDto.UserRole == "Seller")
-            {
-                user.IsSeller = true;
+                _logger.LogError(ex, "An error occurred while Registering the User.");
+                throw new Exception(ex.Message);
             }
-
-            _context.Users.Add(user);
-
-            await _context.SaveChangesAsync();
-
-            return user;
+            
         }
 
     }
