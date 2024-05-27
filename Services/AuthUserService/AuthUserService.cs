@@ -1,6 +1,10 @@
 ﻿using Azure;
+using Azure.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using RentalService.Data;
+using RentalService.Dtos;
 using RentalService.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -13,12 +17,16 @@ namespace RentalService.Services.AuthUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+        private readonly RentalDbContext _context;
 
-        public AuthUserService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public AuthUserService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, 
+                                RentalDbContext dbContext)
         {
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
+            _context = dbContext;
         }
+
         public void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             using (var hmac = new HMACSHA512())
@@ -70,6 +78,41 @@ namespace RentalService.Services.AuthUserService
 
             return refreshToken;
 
+        }
+
+
+        public async Task<User> RegisterUser(UserRegisterDto registerDto)
+        {
+            if (_context.Users.Any(u => u.UserEmail == registerDto.UserEmail))
+            {
+                throw new InvalidOperationException("Email already exists.");
+            }
+
+            CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+
+            var user = new User
+            {
+                UserEmail = registerDto.UserEmail,
+                Username = registerDto.UserEmail.Substring(0, registerDto.UserEmail.IndexOf("@")),
+                PasswordHash = passwordHash,
+                PasswordSalt = passwordSalt,
+                FirstName = registerDto.FirstName,
+                LastName = registerDto.LastName,
+                FullName = string.Concat(registerDto.FirstName, " ", registerDto.LastName),
+                PhoneNumber = registerDto.PhoneNumber,
+                UserRole = registerDto.UserRole,
+            };
+
+            if (registerDto.UserRole != null && registerDto.UserRole == "Seller")
+            {
+                user.IsSeller = true;
+            }
+
+            _context.Users.Add(user);
+
+            await _context.SaveChangesAsync();
+
+            return user;
         }
 
     }

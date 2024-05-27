@@ -1,4 +1,5 @@
-﻿using RentalService.Models;
+﻿using RentalService.Dtos;
+using RentalService.Models;
 
 namespace RentalService.Services.AuthUserService
 {
@@ -11,6 +12,8 @@ namespace RentalService.Services.AuthUserService
         string CreateToken(User user);
 
         RefreshToken GenerateRefreshToken();
+
+        Task<User> RegisterUser(UserRegisterDto registerDto);
 
     }
 }

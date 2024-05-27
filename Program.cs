@@ -7,6 +7,7 @@ using System.Text;
 using RentalService.Data;
 using RentalService.Services.AuthUserService;
 using RentalService.Services.PropertyService;
+using RentalService.Services.InterestService;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
@@ -23,6 +24,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IAuthUserService, AuthUserService>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
+builder.Services.AddScoped<IShowInterestService, ShowInterestService>();
 builder.Services.AddHttpContextAccessor();
 
 // Functionality - Using Bearer Token in Swagger UI (SecurityRequirementsOperationFilter)

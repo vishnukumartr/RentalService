@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RentalService.Dtos
 {
-    public class UserRegisterDtos
+    public class UserRegisterDto
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }

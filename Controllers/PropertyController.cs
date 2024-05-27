@@ -34,7 +34,7 @@ namespace RentalService.Controllers
             }
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("GetPropertyById/{id}")]
         public async Task<ActionResult<Property>> GetProperty(int id)
         {
             try
@@ -55,7 +55,7 @@ namespace RentalService.Controllers
             return Ok(properties);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("PutPropertyById/{id}")]
         public async Task<IActionResult> PutProperty(int id, CreatePropertyDto updatePropertyDto)
         {
             try
@@ -73,7 +73,7 @@ namespace RentalService.Controllers
             }
         }
  
-        [HttpDelete("{id}")]
+        [HttpDelete("DeletePropertyById{id}")]
         public async Task<IActionResult> DeleteProperty(int id)
         {
             var success = await _propertyService.DeletePropertyAsync(id);

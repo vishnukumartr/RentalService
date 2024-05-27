@@ -28,39 +28,14 @@ namespace RentalService.Controllers
 
         [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<ActionResult<string>> Register([FromBody] UserRegisterDtos request)
+        public async Task<ActionResult<string>> Register([FromBody] UserRegisterDto request)
         {
-            if (_context.Users.Any(u => u.UserEmail == request.UserEmail))
-            {
-                return Conflict("Email already exists.");
-            }
-
-            _userService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
-
-            User user = new User();
-            user.UserEmail = request.UserEmail;
-            user.Username = request.UserEmail.Substring(0, request.UserEmail.IndexOf("@"));
-            user.PasswordHash = passwordHash;
-            user.PasswordSalt = passwordSalt;
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName; 
-            user.FullName = string.Concat(user.FirstName, " ", request.LastName);
-            user.PhoneNumber = request.PhoneNumber;
-            user.UserRole = request.UserRole;
-
             if(string.IsNullOrEmpty(request.UserRole) || (request.UserRole != "Seller" && request.UserRole != "Buyer"))
             {
-                return BadRequest("User Role is Empty | User Role allows only - Seller or Buyer");
-            }
-            
-            if(request.UserRole != null && request.UserRole == "Seller") 
-            {
-                user.IsSeller = true;
+                return BadRequest("User Role is Empty | User Role allows values only - Seller or Buyer");
             }
 
-            _context.Users.Add(user);
-
-            await _context.SaveChangesAsync();
+            var user = await _userService.RegisterUser(request);
 
             return Ok("User Registered Successfully");
         }
